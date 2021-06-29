@@ -6,10 +6,12 @@ namespace HotelConsoleSqlClient
 {
     class Program
     {
+        public static SqlConnection dbcon = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\paula\OneDrive\Dokument\thehotel.mdf;Integrated Security=True;Connect Timeout=30");
         static void Main(string[] args)
         {
 
-            DbHelper db = new DbHelper();
+             
+            DbHelper db = new DbHelper(dbcon);
             db.CreateTables();
             
             Console.WriteLine("Welcome!");
