@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,11 +18,11 @@ namespace HotelConsoleSqlClient
         {
         dbcon = conn;
         }
-        
+
         public void CreateTables()
         {
-           
-          var paymentMethods = $@"
+
+            var paymentMethods = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
             WHERE object_id = OBJECT_ID(N'[dbo].[PaymentMethods]') AND type in (N'U'))
            BEGIN
@@ -30,8 +31,8 @@ namespace HotelConsoleSqlClient
 	            [PaymentTypeName] [varchar](21)
 	            )
             END";
-           
-           var roomTypes = $@"
+
+            var roomTypes = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
             WHERE object_id = OBJECT_ID(N'[dbo].[RoomTypes]') AND type in (N'U'))
             BEGIN
@@ -51,7 +52,7 @@ namespace HotelConsoleSqlClient
 	            [PhoneNumber] [varchar](11) NOT NULL,
 	            )
             END";
-            
+
             var guests = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
             WHERE object_id = OBJECT_ID(N'[dbo].[Guests]') AND type in (N'U'))
@@ -85,7 +86,7 @@ namespace HotelConsoleSqlClient
                 REFERENCES PaymentMethods(Id),
                 )
             END";
-            
+
             var rooms = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
             WHERE object_id = OBJECT_ID(N'[dbo].[Rooms]') AND type in (N'U'))
@@ -104,27 +105,62 @@ namespace HotelConsoleSqlClient
                 
                 )
             END";
-            
-            string insertPaymethods = "INSERT INTO PaymentMethods (PaymentTypeName)  VALUES ('Kort'),('Swish'),('Kontant')";
-            string insertRoomTypes = "INSERT INTO RoomTypes (RoomTypeName,Price) VALUES ('Enkelrum','600'),('Enkelrum','600'),('Dubbelrum','1100'),('Dubbelrum','1100'),('Svit','2100'),('Svit','2100')";
 
+            dbcon.Open();
+            
+           
+            
             using (dbcon)
             {
-                dbcon.Open();
-                string[] sqls = new string[] { paymentMethods, roomTypes, phonenumbers,guests, reservations,rooms,insertPaymethods,insertRoomTypes };
+               
+                string[] sqls = new string[] { paymentMethods, roomTypes, phonenumbers,guests, reservations,rooms };
                 
                 for (int i = 0;i< sqls.Length; i++)
                 {
+                    if (sqls[i] != "") { 
                     using var cmd = new SqlCommand(sqls[i], dbcon);
                     cmd.ExecuteNonQuery();
+                    }
                 }
+
                 
-              
+                string checkPaymethods = "SELECT COUNT (*) AS antal FROM PaymentMethods",
+                        checkRoomTypes = "SELECT COUNT (*) AS antal FROM RoomTypes",
+                        checkRooms = "SELECT COUNT (*) AS antal FROM Rooms";
+                string[] checks = new string[] { checkPaymethods, checkRoomTypes, checkRooms };
+                
+               
+               for (int i = 0; i < checks.Length; i++)
+                {
+                    var cmdcheck = new SqlCommand(checks[i], dbcon);
+                    int count = (int)cmdcheck.ExecuteScalar();
+                    if (count == 0)
+                    {
+                        if (i == 0)
+                        {
+                            cmdcheck = new SqlCommand("INSERT INTO PaymentMethods (PaymentTypeName)  VALUES ('Kort'),('Swish'),('Kontant')", dbcon);
+                            cmdcheck.ExecuteNonQuery();
+                        }
+                        if (i == 1)
+                        {
+                            cmdcheck = new SqlCommand("INSERT INTO RoomTypes (RoomTypeName,Price) VALUES ('Enkelrum','600'),('Dubbelrum','1100'),('Svit','2100')", dbcon);
+                            cmdcheck.ExecuteNonQuery();
+                        }
+                        if (i == 2)
+                        {
+                            cmdcheck = new SqlCommand("INSERT INTO Rooms (RoomTypeId) VALUES ('1'),('1'),('2'),('2'),('3'),('3')", dbcon);
+                            cmdcheck.ExecuteNonQuery();
+                        }
+                    }
+                }
+             }  
 
-            }
+                 
+}
+            
 
 
-        }
+        
 
 
     }
