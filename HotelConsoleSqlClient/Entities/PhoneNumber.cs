@@ -11,5 +11,6 @@ namespace HotelConsoleSqlClient.Entities
        
         public int Id { get; set; } 
         public String Telnumber { get; set; }
+        public String GuestId { get; set; }
     }
 }

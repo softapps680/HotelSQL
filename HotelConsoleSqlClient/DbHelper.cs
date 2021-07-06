@@ -42,6 +42,17 @@ namespace HotelConsoleSqlClient
 	            [Price] [decimal] NOT NULL
                 )
             END";
+            var guests = $@"
+            IF  NOT EXISTS (SELECT * FROM sys.objects 
+            WHERE object_id = OBJECT_ID(N'[dbo].[Guests]') AND type in (N'U'))
+            BEGIN
+            CREATE TABLE [dbo].[Guests](
+	            [Id] [varchar](38) PRIMARY KEY NOT NULL,
+	            [FirstName] [varchar](21) NOT NULL,
+                [LastName] [varchar](21) NOT NULL,
+	            [Email] [varchar](21) NOT NULL
+            )
+            END";
 
             var phonenumbers = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
@@ -50,42 +61,14 @@ namespace HotelConsoleSqlClient
             CREATE TABLE [dbo].[GuestPhonenumbers](
 	            [Id] [int] IDENTITY(1,1) PRIMARY KEY NOT NULL,
 	            [PhoneNumber] [varchar](11) NOT NULL,
+                [GuestId] [varchar](38) NOT NULL,
+                
+                
+                CONSTRAINT FK_GuestsGuestsPhoneNumber FOREIGN KEY (GuestId)
+                REFERENCES Guests(Id)
 	            )
             END";
 
-            var guests = $@"
-            IF  NOT EXISTS (SELECT * FROM sys.objects 
-            WHERE object_id = OBJECT_ID(N'[dbo].[Guests]') AND type in (N'U'))
-            BEGIN
-            CREATE TABLE [dbo].[Guests](
-	            [Id] [varchar](38)  NOT NULL,
-	            [TelephoneId] [int]  NOT NULL,
-                [FirstName] [varchar](21) NOT NULL,
-                [LastName] [varchar](21) NOT NULL,
-	            [Email] [varchar](21) NOT NULL,
-
-                PRIMARY KEY (Id),
-                CONSTRAINT FK_GuestsGuestsTelephoneId FOREIGN KEY (TelephoneId)
-                REFERENCES GuestPhoneNumbers(Id)
-                )
-            END";
-
-            var reservations = $@"
-            IF  NOT EXISTS (SELECT * FROM sys.objects 
-            WHERE object_id = OBJECT_ID(N'[dbo].[Reservations]') AND type in (N'U'))
-            BEGIN
-            CREATE TABLE [dbo].[Reservations](
-	            [Id] [varchar](38)  NOT NULL,
-	            [GuestId] [varchar](38)  NOT NULL,
-                [PaymentMethodId] [int] NOT NULL,
-                
-                PRIMARY KEY (Id),
-                CONSTRAINT FK_ReservationsGuests FOREIGN KEY (GuestId)
-                REFERENCES Guests(Id),
-                CONSTRAINT FK_ReservationsPaymentMethods FOREIGN KEY (PaymentmethodId)
-                REFERENCES PaymentMethods(Id),
-                )
-            END";
 
             var rooms = $@"
             IF  NOT EXISTS (SELECT * FROM sys.objects 
@@ -97,14 +80,35 @@ namespace HotelConsoleSqlClient
                 [ReservationId] [varchar](38) ,
                 [CheckInDate] [date] ,
                 [CheckOutDate] [date] ,
+                
                 PRIMARY KEY (Id),
                 CONSTRAINT FK_ReservationsRoomTypes FOREIGN KEY (RoomTypeId)
                 REFERENCES RoomTypes(Id),
-                CONSTRAINT FK_ReservationsRooms FOREIGN KEY (ReservationId)
-                REFERENCES Reservations(Id)
+                
                 
                 )
             END";
+            //CONSTRAINT FK_ReservationsRooms FOREIGN KEY (ReservationId)
+            //REFERENCES Reservations(Id)
+            var reservations = $@"
+            IF  NOT EXISTS (SELECT * FROM sys.objects 
+            WHERE object_id = OBJECT_ID(N'[dbo].[Reservations]') AND type in (N'U'))
+            BEGIN
+            CREATE TABLE [dbo].[Reservations](
+	            [Id] [varchar](38)  NOT NULL,
+	            [GuestId] [varchar](38)  NOT NULL,
+                [RoomId] [int], 
+                [PaymentMethodId] [int] NOT NULL,
+                
+                PRIMARY KEY (Id),
+                CONSTRAINT FK_ReservationsGuests FOREIGN KEY (GuestId)
+                REFERENCES Guests(Id),
+                CONSTRAINT FK_ReservationsPaymentMethods FOREIGN KEY (PaymentmethodId)
+                REFERENCES PaymentMethods(Id),
+                )
+            END";
+
+            
 
             dbcon.Open();
             
@@ -113,7 +117,7 @@ namespace HotelConsoleSqlClient
             using (dbcon)
             {
                
-                string[] sqls = new string[] { paymentMethods, roomTypes, phonenumbers,guests, reservations,rooms };
+                string[] sqls = new string[] { paymentMethods, roomTypes,guests, phonenumbers, rooms,reservations };
                 
                 for (int i = 0;i< sqls.Length; i++)
                 {
