@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 
 namespace HotelConsoleSqlClient
@@ -26,7 +27,9 @@ namespace HotelConsoleSqlClient
             Console.WriteLine("Welcome!");
             Console.WriteLine("1. Skapa bokning");
             Console.WriteLine("2. Lista bokningar");
-            
+            Console.WriteLine("3. Lista alla rum");
+            Console.WriteLine("4. Lista lediga rum");
+
             var selection = Console.ReadLine();
 
             if (selection == "1")
@@ -37,7 +40,14 @@ namespace HotelConsoleSqlClient
             {
                 ReservationsList();
             }
-
+            if (selection == "3")
+            {
+                RoomsList();
+            }
+            if (selection == "4")
+            {
+                FreeRoomsList();
+            }
         }
        
         public static void InsertCustomer()
@@ -125,8 +135,8 @@ namespace HotelConsoleSqlClient
             {
                
                 c.dbcon.Open();
-                Console.WriteLine("Unbooked rooms today ");
-                
+                Console.WriteLine("Obokade rum idag");
+                //Kolla datum på reservationsID
                 using var cmd = new SqlCommand("SELECT Rooms.Id, RoomTypes.RoomTypeName FROM Rooms INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id WHERE ReservationId is NULL", c.dbcon);
 
                 var result = cmd.ExecuteReader();
@@ -143,30 +153,23 @@ namespace HotelConsoleSqlClient
                 var checkin = Console.ReadLine();
                 Console.WriteLine("Check out date  ");
                 var checkout = Console.ReadLine();
-
+                //"update tblposts set title=@ptitle, pdate=@pd, 
+               // content = @pcontent where pid = @p"
                 //create reservation
-                using var insertReservationCmd = new SqlCommand("INSERT INTO Reservations (Id,GuestId,RoomId,PaymentMethodId) VALUES (@Id,@GuestId,@RoomId,@PaymentMethodId)", c.dbcon);
+                using var insertReservationCmd = new SqlCommand("INSERT INTO Reservations (Id,GuestId,RoomId,PaymentMethodId,CheckInDate,CheckOutDate) VALUES (@Id,@GuestId,@RoomId,@PaymentMethodId,@CheckInDate,@CheckOutDate)", c.dbcon);
                 insertReservationCmd.Parameters.AddWithValue("@Id", resid);
                 insertReservationCmd.Parameters.AddWithValue("@GuestId", guestid);
                 insertReservationCmd.Parameters.AddWithValue("@RoomId", roomId);
                 insertReservationCmd.Parameters.AddWithValue("@PaymentMethodId", paymentMethodId);
+                insertReservationCmd.Parameters.AddWithValue("@CheckInDate", checkin);
+                insertReservationCmd.Parameters.AddWithValue("@CheckOutDate", checkout);
                 insertReservationCmd.ExecuteNonQuery();
-                //update the room with dates and  reservationsid
-
-
-                string reserveSQL = "UPDATE Rooms SET ReservationId = @ReservationId ,CheckInDate=@CheckInDate ,CheckOutDate=@CheckOutDate WHERE Id=@ID" ;
                 
-            
-       
-                SqlCommand command = new SqlCommand(reserveSQL, c.dbcon);
-                    
-                command.Parameters.Add("@ID", SqlDbType.Int);
-                command.Parameters["@ID"].Value = roomId;
-
-                command.Parameters.AddWithValue("@ReservationId", resid);
-                command.Parameters.AddWithValue("@CheckInDate", checkin);
-                command.Parameters.AddWithValue("@CheckOutDate", checkout);
-                command.ExecuteNonQuery();
+                using var updateRooms = new SqlCommand("UPDATE Rooms SET ReservationId = @ReservationId WHERE Id = @RoomId", c.dbcon);
+                updateRooms.Parameters.AddWithValue("@RoomId", roomId);
+                updateRooms.Parameters.AddWithValue("@ReservationId", resid);
+                
+                updateRooms.ExecuteNonQuery();
             }
         }
         public static void ReservationsList()
@@ -177,23 +180,97 @@ namespace HotelConsoleSqlClient
                 c.dbcon.Open();
 
                 
-                string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName, Guests.FirstName, Guests.LastName FROM Rooms"
-                +" INNER JOIN Reservations ON Rooms.ReservationId = Reservations.Id"
-                +" INNER JOIN Guests ON Guests.Id = Reservations.GuestId"
+                string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName, Guests.FirstName, Guests.LastName, CheckInDate, CheckOutDate, Id FROM Reservations"
+                +" INNER JOIN Rooms ON Rooms.Id = Reservations.RoomId"
+                +" INNER JOIN Guests ON  Guests.Id = Reservations.GuestId"
                 +" INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id";
                 
               
 
                 var result = new SqlCommand(sql, c.dbcon).ExecuteReader();
 
-                Console.WriteLine("Rum \t Rumstyp \t Förnamn \t Efternamn");
-                
+                Console.WriteLine("Rum \t Rumstyp \t Förnamn \t Efternamn \t Incheckning \t Utcheckning \t");
+               
                 while (result.Read())
                 {
-                    Console.WriteLine($"{result.GetValue(0)} \t {result.GetValue(1)} \t {result.GetValue(2)} \t {result.GetValue(3)} ");
+                    Console.WriteLine($"{result.GetValue(0)} \t {result.GetValue(1)} \t {result.GetValue(2)} \t {result.GetValue(3)} \t {result.GetValue(4)} \t { result.GetValue(5)} \t { result.GetValue(6)} ");
                 }
 
-                Console.WriteLine("Ange Rumsnummer för att checka ute gästen");
+                Console.WriteLine("Ange Rumsnummer för att checka ut gästen");
+                int RoomNumber = int.Parse(Console.ReadLine());
+                //hämta resid
+               
+                
+                using var updateRooms = new SqlCommand("UPDATE Rooms SET ReservationId = NULL WHERE Id = @RoomId", c.dbcon);
+                updateRooms.Parameters.AddWithValue("@RoomId", RoomNumber);
+                updateRooms.Parameters.AddWithValue("@ReservationId", null);
+
+                updateRooms.ExecuteNonQuery();
+
+            }
+        }
+        public static void RoomsList()
+        {
+            Connecting c = new Connecting();
+            using (c.dbcon)
+            {
+                c.dbcon.Open();
+
+
+                string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName  FROM Rooms"
+
+                            + " INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id";
+
+
+
+                var result = new SqlCommand(sql, c.dbcon).ExecuteReader();
+
+                Console.WriteLine("Rum \t Rumstyp \t ");
+
+                while (result.Read())
+                {
+                    Console.WriteLine($"{result.GetValue(0)} \t {result.GetValue(1)} ");
+                }
+            }
+        }
+        public static void FreeRoomsList()
+        {
+            Connecting c = new Connecting();
+  Console.WriteLine("Önskad incheckning");
+           
+           
+
+            var dateStr = Console.ReadLine();
+            
+            DateTime dt = DateTime.ParseExact(dateStr, "yyyyMMdd", CultureInfo.InvariantCulture);
+            string arrival = dt.ToString("yyyy-MM-dd");
+           
+            Console.WriteLine("Önskad utcheckning");
+            string leave = DateTime.ParseExact(Console.ReadLine(), "yyyyMMdd", CultureInfo.InvariantCulture).ToString();
+
+            //rum utan reservationId mellan två datum
+
+            string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName FROM Rooms"
+            + " INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id"
+            + " EXCEPT"
+            + " SELECT  Rooms.Id, RoomTypes.RoomTypeName FROM Rooms"
+            + " INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id"
+            + " INNER JOIN Reservations ON Rooms.Id = Reservations.RoomId"
+            + " WHERE CheckInDate >= '" + arrival + "' AND CheckOutDate <= '" + leave + "'";
+           
+            using (c.dbcon)
+            {
+
+                c.dbcon.Open();
+
+                var result = new SqlCommand(sql, c.dbcon).ExecuteReader();
+                
+
+
+                while (result.Read())
+                {
+                    Console.WriteLine($"{result.GetValue(0)} {result.GetValue(1)}");
+                }
             }
         }
     }
