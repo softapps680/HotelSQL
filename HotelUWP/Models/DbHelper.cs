@@ -15,9 +15,9 @@ namespace HotelUWP.Models
     public static class DbHelper
     {
         public static SqliteConnection conn { get; set; }
+        public static string dbpath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "hoteltest.db");
 
-        
-       
+
 
 
         public  static async void InitializeDatabase()
@@ -109,9 +109,6 @@ namespace HotelUWP.Models
         }
         public static ObservableCollection<Room> GetFreeRooms(string arrival, string leave)
         {
-            string dbpath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "hoteltest.db");
-            Debug.WriteLine(arrival+ "och" +leave);
-           
             string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName FROM Rooms"
                + " INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id"
                + " EXCEPT"
@@ -119,7 +116,7 @@ namespace HotelUWP.Models
                + " INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id"
                + " INNER JOIN Reservations ON Rooms.Id = Reservations.RoomId"
                + " WHERE CheckInDate >= '" + arrival + "' AND CheckOutDate <= '" + leave + "'";
-            Debug.WriteLine(sql);
+          
             using (SqliteConnection conn = new SqliteConnection($"Filename={dbpath}"))
             {
                 conn.Open();
@@ -132,7 +129,7 @@ namespace HotelUWP.Models
                  return room;
              },
              splitOn:"RoomTypeName")
-         .Distinct() .ToList();
+            .Distinct() .ToList();
 
             ObservableCollection<Room> freeRooms = new ObservableCollection<Room>();
 
@@ -149,9 +146,7 @@ namespace HotelUWP.Models
 
         public static void  SaveGuest(Guest guest)
         {
-            string dbpath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "hoteltest.db");
-
-
+           
             using (SqliteConnection conn = new SqliteConnection($"Filename={dbpath}")) { 
 
                 conn.Execute("INSERT INTO Guests (Id, FirstName, LastName, Email)  VALUES(@Id, @FirstName, @LastName, @Email)", guest);
@@ -162,21 +157,17 @@ namespace HotelUWP.Models
                 }
             }
         }
+        
         public static void SaveReservation(Reservation reservation, Room room)
         {
-            Debug.WriteLine("HALLO "+reservation.GuestId+"  " +reservation.RoomId+" "+reservation.PaymentMethodId);
             
-            string sql = "INSERT INTO Reservations (Id, GuestId, RoomId, PaymentMethodId) Values (@Id, @GuestId, @RoomId, @PaymentMethodId);";
-
-            string  sql2 = "UPDATE Rooms SET ReservationId = @ReservationId, CheckInDate = @CheckInDate, CheckOutDate = @CheckOutDate WHERE Id = @Id";
+            string insert = "INSERT INTO Reservations (Id, GuestId, RoomId, PaymentMethodId) Values (@Id, @GuestId, @RoomId, @PaymentMethodId);";
+            string update = "UPDATE Rooms SET ReservationId = @ReservationId, CheckInDate = @CheckInDate, CheckOutDate = @CheckOutDate WHERE Id = @Id";
            
-            string dbpath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "hoteltest.db");
-
-
             using (SqliteConnection conn = new SqliteConnection($"Filename={dbpath}"))
             {
-                conn.Execute(sql, reservation );
-                conn.Execute(sql2, room);
+                conn.Execute(insert, reservation );
+                conn.Execute(update, room);
             }
         }
     }

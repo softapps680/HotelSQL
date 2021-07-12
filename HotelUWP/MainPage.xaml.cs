@@ -90,18 +90,11 @@ namespace HotelUWP
             this.guestId = g.ToString();
 
             List<GuestPhonenumber> phones = new List<GuestPhonenumber>();
-            GuestPhonenumber gp = new GuestPhonenumber();
-            GuestPhonenumber gp2 = new GuestPhonenumber();
-            gp.GuestId = this.guestId;
-            gp.PhoneNumber = Phone1.Text;
-            gp2.GuestId = this.guestId;
-            gp2.PhoneNumber = Phone2.Text;
-            phones.Add(gp);
-            phones.Add(gp2);
+            phones.Add(new GuestPhonenumber {GuestId=this.guestId,PhoneNumber=Phone1.Text});
+            phones.Add(new GuestPhonenumber {GuestId = this.guestId,PhoneNumber = Phone2.Text });
 
             Guest guest = new Guest(phones);
             guest.Id = this.guestId;
-           
             guest.FirstName = FirstName.Text;
             guest.LastName = LastName.Text;
             guest.Email = Email.Text;
