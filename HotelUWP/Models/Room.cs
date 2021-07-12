@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HotelConsoleSqlClient.Entities
+namespace HotelUWP.Models
 {
-    class Room
+    public class Room
     {
         public int Id { get; set; }
         public int RoomTypeId { get; set; }
@@ -15,6 +15,5 @@ namespace HotelConsoleSqlClient.Entities
         public DateTime CheckOutDate { get; set; }
 
         public RoomType RoomType { get; set; }
-
     }
 }

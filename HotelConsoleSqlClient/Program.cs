@@ -153,9 +153,7 @@ namespace HotelConsoleSqlClient
                 var checkin = Console.ReadLine();
                 Console.WriteLine("Check out date  ");
                 var checkout = Console.ReadLine();
-                //"update tblposts set title=@ptitle, pdate=@pd, 
-               // content = @pcontent where pid = @p"
-                //create reservation
+                
                 using var insertReservationCmd = new SqlCommand("INSERT INTO Reservations (Id,GuestId,RoomId,PaymentMethodId,CheckInDate,CheckOutDate) VALUES (@Id,@GuestId,@RoomId,@PaymentMethodId,@CheckInDate,@CheckOutDate)", c.dbcon);
                 insertReservationCmd.Parameters.AddWithValue("@Id", resid);
                 insertReservationCmd.Parameters.AddWithValue("@GuestId", guestid);
@@ -180,14 +178,13 @@ namespace HotelConsoleSqlClient
                 c.dbcon.Open();
 
                 
-                string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName, Guests.FirstName, Guests.LastName, CheckInDate, CheckOutDate, Id FROM Reservations"
+                string sql = "SELECT  Rooms.Id, RoomTypes.RoomTypeName, Guests.FirstName, Guests.LastName, CheckInDate, CheckOutDate, Reservations.Id FROM Reservations"
                 +" INNER JOIN Rooms ON Rooms.Id = Reservations.RoomId"
                 +" INNER JOIN Guests ON  Guests.Id = Reservations.GuestId"
-                +" INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id";
+                +" INNER JOIN RoomTypes ON Rooms.RoomTypeId = RoomTypes.Id"
+                +" WHERE Rooms.ReservationId is not null";
                 
-              
-
-                var result = new SqlCommand(sql, c.dbcon).ExecuteReader();
+               var result = new SqlCommand(sql, c.dbcon).ExecuteReader();
 
                 Console.WriteLine("Rum \t Rumstyp \t Förnamn \t Efternamn \t Incheckning \t Utcheckning \t");
                
@@ -197,17 +194,23 @@ namespace HotelConsoleSqlClient
                 }
 
                 Console.WriteLine("Ange Rumsnummer för att checka ut gästen");
-                int RoomNumber = int.Parse(Console.ReadLine());
+                int roomNumber = int.Parse(Console.ReadLine());
                 //hämta resid
-               
-                
-                using var updateRooms = new SqlCommand("UPDATE Rooms SET ReservationId = NULL WHERE Id = @RoomId", c.dbcon);
-                updateRooms.Parameters.AddWithValue("@RoomId", RoomNumber);
-                updateRooms.Parameters.AddWithValue("@ReservationId", null);
+                string residQuery = "SELECT ReservationId FROM Rooms WHERE Id=" + roomNumber + "";
+                var res = new SqlCommand(residQuery, c.dbcon).ExecuteReader();
+                string resId=""; 
 
-                updateRooms.ExecuteNonQuery();
+                while (res.Read()) { 
+                     resId = res.GetValue(0).ToString(); 
+                }
 
-            }
+                     using var updateRooms = new SqlCommand("UPDATE Rooms SET ReservationId = NULL WHERE Id = @RoomId", c.dbcon);
+                     updateRooms.Parameters.AddWithValue("@RoomId", roomNumber);
+                     updateRooms.Parameters.AddWithValue("@ReservationId", resId);
+
+                     updateRooms.ExecuteNonQuery();
+
+                }
         }
         public static void RoomsList()
         {

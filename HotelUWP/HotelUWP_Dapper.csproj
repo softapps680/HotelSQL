@@ -122,6 +122,13 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\DbHelper.cs" />
+    <Compile Include="Models\Guest.cs" />
+    <Compile Include="Models\GuestPhonenumber.cs" />
+    <Compile Include="Models\PaymentMethod.cs" />
+    <Compile Include="Models\Reservation.cs" />
+    <Compile Include="Models\Room.cs" />
+    <Compile Include="Models\RoomType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -156,18 +163,15 @@
     <PackageReference Include="Microsoft.Data.Sqlite">
       <Version>5.0.7</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Data.Sqlite.Core">
+      <Version>5.0.7</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.12</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DataAccessLibrary\DataAccessLibrary.csproj">
-      <Project>{5aa3551b-2c5b-488d-bae7-f92657967dcf}</Project>
-      <Name>DataAccessLibrary</Name>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
